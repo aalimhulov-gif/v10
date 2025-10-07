@@ -23,7 +23,15 @@
     <div id="app">
       <h1>💰 Семейный бюджет - Артур и Валерия</h1>
       <div id="content">
-        <p>Приложение загружается...</p>
+        <div id="error-message" style="display: none; color: red; margin: 20px; padding: 20px; border: 1px solid red; border-radius: 5px;">
+          <h3>Ошибка загрузки приложения</h3>
+          <p>Проверьте консоль браузера для деталей.</p>
+          <button onclick="location.reload()">Обновить страницу</button>
+        </div>
+        <div id="loading-status">
+          <p>Приложение загружается...</p>
+          <div id="module-status"></div>
+        </div>
       </div>
     </div>
 

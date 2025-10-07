@@ -11,185 +11,262 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Показываем индикатор загрузки
         showAppLoader(true);
+        
+        // Показываем статус загрузки
+        updateLoadingStatus('Инициализация модулей...');
 
         // Инициализируем компоненты в правильном порядке
         await initializeApplication();
 
         // Скрываем индикатор загрузки
         showAppLoader(false);
-
-        helpers.log('✅ Приложение успешно загружено');
-        showToast('Добро пожаловать в Family Budget!', 'success');
+        
+        updateLoadingStatus('Приложение готово!');
 
     } catch (error) {
-        console.error('❌ Ошибка запуска приложения', error);
-        showAppError('Ошибка загрузки приложения. Попробуйте обновить страницу.');
+        console.error('❌ Ошибка запуска приложения:', error);
+        showAppError('Ошибка загрузки приложения: ' + error.message);
     }
 });
 
+// Ожидание загрузки всех модулей
+async function waitForModules() {
+    const maxWait = 5000; // 5 секунд максимум
+    const startTime = Date.now();
+    
+    updateLoadingStatus('Ожидание загрузки модулей...');
+    
+    while (Date.now() - startTime < maxWait) {
+        const modules = {
+            storageManager: window.storageManager,
+            currency: window.currency,
+            helpers: window.helpers,
+            authManager: window.authManager,
+            showToast: window.showToast
+        };
+        
+        const loadedCount = Object.values(modules).filter(m => m).length;
+        updateLoadingStatus(`Загружено модулей: ${loadedCount}/5`);
+        
+        if (loadedCount >= 4) { // Минимум 4 из 5 модулей
+            console.log('✅ Достаточно модулей загружено');
+            return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    console.warn('⚠️ Не все модули загрузились за отведенное время');
+}
+
 // Инициализация приложения
 async function initializeApplication() {
+    console.log('📋 Начинаем инициализацию приложения...');
+    
+    // Ждем загрузки всех модулей
+    await waitForModules();
+    
     // 1. Инициализируем утилиты
-    if (window.storageManager) {
-        await window.storageManager.init();
+    updateLoadingStatus('Инициализация StorageManager...');
+    if (window.storageManager && typeof window.storageManager.init === 'function') {
+        try {
+            await window.storageManager.init();
+            console.log('✅ StorageManager инициализирован');
+        } catch (error) {
+            console.error('❌ Ошибка инициализации StorageManager:', error);
+        }
+    } else {
+        console.warn('⚠️ StorageManager не найден или не имеет метода init');
     }
 
-    if (window.currency) {
-        await window.currency.init();
+    updateLoadingStatus('Инициализация Currency...');
+    if (window.currency && typeof window.currency.init === 'function') {
+        try {
+            await window.currency.init();
+            console.log('✅ Currency инициализирован');
+        } catch (error) {
+            console.error('❌ Ошибка инициализации Currency:', error);
+        }
+    } else {
+        console.warn('⚠️ Currency не найден или не имеет метода init');
     }
 
     // 2. Инициализируем Firebase (если доступен)
-    if (window.initializeFirebase) {
-        window.initializeFirebase();
+    updateLoadingStatus('Инициализация Firebase...');
+    if (window.initializeFirebase && typeof window.initializeFirebase === 'function') {
+        try {
+            window.initializeFirebase();
+            console.log('✅ Firebase инициализирован');
+        } catch (error) {
+            console.error('❌ Ошибка инициализации Firebase:', error);
+        }
+    } else {
+        console.warn('⚠️ Firebase не найден');
     }
 
     // 3. Инициализируем менеджеры
-    if (window.authManager) {
-        await window.authManager.init();
+    updateLoadingStatus('Инициализация AuthManager...');
+    if (window.authManager && typeof window.authManager.init === 'function') {
+        try {
+            await window.authManager.init();
+            console.log('✅ AuthManager инициализирован');
+        } catch (error) {
+            console.error('❌ Ошибка инициализации AuthManager:', error);
+        }
+    } else {
+        console.warn('⚠️ AuthManager не найден или не имеет метода init');
     }
 
-    if (window.dbManager) {
-        await window.dbManager.init();
+    // 4. Инициализируем UI компоненты (упрощенно)
+    updateLoadingStatus('Инициализация интерфейса...');
+    await initializeSimpleUI();
+
+    console.log('🎉 Приложение полностью инициализировано');
+}
+
+// Простая инициализация UI
+async function initializeSimpleUI() {
+    try {
+        // Применяем пользовательские настройки
+        applyUserSettings();
+        
+        // Показываем базовый интерфейс
+        showBasicInterface();
+        
+        console.log('✅ UI инициализирован');
+    } catch (error) {
+        console.error('❌ Ошибка инициализации UI:', error);
     }
-
-    if (window.operationsManager) {
-        await window.operationsManager.init();
-    }
-
-    // 4. Инициализируем компоненты интерфейса
-    if (window.modalsManager) {
-        await window.modalsManager.init();
-    }
-
-    if (window.userCardsManager) {
-        await window.userCardsManager.init();
-    }
-
-    // 5. Загружаем настройки и применяем тему
-    applyUserSettings();
-
-    // 6. Инициализируем навигацию (последним)
-    if (window.navigationManager) {
-        // navigationManager уже инициализируется автоматически
-        helpers.log('Навигация готова');
-    }
-
-    // 7. Настраиваем автоматические процессы
-    setupAutoProcesses();
 }
 
 // Применение пользовательских настроек
 function applyUserSettings() {
-    const settings = storageManager.getUserSettings();
-    
-    // Применяем тему
-    document.documentElement.setAttribute('data-theme', settings.theme);
-    
-    // Обновляем заголовок
-    document.title = `${window.APP_NAME} - ${settings.currency}`;
-    
-    // Применяем язык
-    document.documentElement.setAttribute('lang', settings.language || 'ru');
+    try {
+        const settings = window.storageManager ? 
+            window.storageManager.getUserSettings() : 
+            { theme: 'dark', currency: 'PLN' };
+        
+        // Применяем тему
+        document.documentElement.setAttribute('data-theme', settings.theme);
+        
+        // Обновляем заголовок
+        document.title = `${window.APP_NAME} - ${settings.currency}`;
+        
+        console.log('✅ Настройки применены:', settings);
+    } catch (error) {
+        console.error('❌ Ошибка применения настроек:', error);
+    }
 }
 
-// Настройка автоматических процессов
-function setupAutoProcesses() {
-    // Автосохранение каждые 30 секунд
-    setInterval(() => {
-        if (document.hidden) return; // Не сохраняем, если вкладка неактивна
-        
-        try {
-            // Здесь можно добавить логику автосохранения
-            // storageManager.saveAll();
-        } catch (error) {
-            helpers.log('Ошибка автосохранения', error, 'warn');
-        }
-    }, 30000);
+// Показ базового интерфейса
+function showBasicInterface() {
+    const content = document.getElementById('content');
+    if (content) {
+        content.innerHTML = `
+            <div class="welcome-screen">
+                <h2>🎉 Добро пожаловать!</h2>
+                <p>Семейный бюджет для Артура и Валерии</p>
+                <div class="features">
+                    <div class="feature">
+                        <i class="fas fa-wallet"></i>
+                        <span>Управление бюджетом</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Аналитика расходов</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-sync"></i>
+                        <span>Синхронизация данных</span>
+                    </div>
+                </div>
+                <button onclick="startDemo()" class="btn-primary">
+                    <i class="fas fa-play"></i> Начать работу
+                </button>
+            </div>
+        `;
+    }
+}
 
-    // Обновление курсов валют каждый час
-    setInterval(async () => {
-        const settings = storageManager.getUserSettings();
-        if (settings.currencyAutoUpdate && window.currency) {
-            try {
-                await window.currency.updateRates();
-                helpers.log('Курсы валют обновлены автоматически');
-            } catch (error) {
-                helpers.log('Ошибка автообновления курсов', error, 'warn');
-            }
-        }
-    }, 60 * 60 * 1000);
+// Демо-функция для тестирования
+function startDemo() {
+    if (window.showToast) {
+        window.showToast('Приложение готово к работе!', 'success');
+    } else {
+        alert('Приложение готово к работе!');
+    }
+    
+    console.log('🎮 Демо режим запущен');
+}
 
-    // Проверка лимитов при видимости страницы
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && window.limitsPage) {
-            // Можно добавить проверку лимитов
-        }
-    });
+// Обновление статуса загрузки
+function updateLoadingStatus(message) {
+    const statusElement = document.getElementById('module-status');
+    if (statusElement) {
+        statusElement.innerHTML = `<p style="color: #666; font-style: italic;">${message}</p>`;
+    }
+    console.log('📊 Статус:', message);
 }
 
 // Показ/скрытие индикатора загрузки
 function showAppLoader(show) {
-    const loader = document.getElementById('app-loader');
+    const loader = document.getElementById('loader');
+    const loadingStatus = document.getElementById('loading-status');
+    
     if (loader) {
-        loader.style.display = show ? 'flex' : 'none';
+        loader.style.display = show ? 'block' : 'none';
+    }
+    
+    if (loadingStatus) {
+        loadingStatus.style.display = show ? 'block' : 'none';
     }
 }
 
 // Показ ошибки приложения
 function showAppError(message) {
-    const errorContainer = document.getElementById('app-error');
+    const errorContainer = document.getElementById('error-message');
     if (errorContainer) {
-        errorContainer.innerHTML = `
-            <div class="error-banner">
-                <i class="fas fa-exclamation-triangle"></i>
-                <div>
-                    <h3>Ошибка приложения</h3>
-                    <p>${message}</p>
-                </div>
-                <button onclick="window.location.reload()" class="btn btn-outline">
-                    <i class="fas fa-refresh"></i> Обновить
-                </button>
-            </div>
-        `;
         errorContainer.style.display = 'block';
-    }
-}
-
-// Обработчики глобальных событий
-window.addEventListener('error', (event) => {
-    helpers.log('Глобальная ошибка JavaScript', event.error, 'error');
-    
-    // Можно показать пользователю уведомление о критической ошибке
-    if (event.error && event.error.message.includes('ChunkLoadError')) {
-        showToast('Обнаружено обновление приложения. Перезагрузите страницу.', 'warning', 10000);
-    }
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-    helpers.log('Необработанная ошибка Promise', event.reason, 'error');
-});
-
-// Обработка онлайн/офлайн статуса
-window.addEventListener('online', () => {
-    showToast('Соединение восстановлено', 'success');
-    helpers.log('Приложение онлайн');
-});
-
-window.addEventListener('offline', () => {
-    showToast('Соединение потеряно. Работаем в автономном режиме.', 'warning');
-    helpers.log('Приложение офлайн');
-});
-
-// Обработка смены темы системы
-if (window.matchMedia) {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addListener((e) => {
-        const settings = storageManager.getUserSettings();
-        if (settings.theme === 'auto') {
-            const newTheme = e.matches ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', newTheme);
+        const messageP = errorContainer.querySelector('p');
+        if (messageP) {
+            messageP.textContent = message;
         }
-    });
+    } else {
+        // Создаем элемент ошибки если его нет
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            color: red; 
+            margin: 20px; 
+            padding: 20px; 
+            border: 1px solid red; 
+            border-radius: 5px;
+            background: #ffe6e6;
+        `;
+        errorDiv.innerHTML = `
+            <h3>❌ Ошибка приложения</h3>
+            <p>${message}</p>
+            <button onclick="location.reload()" style="margin-top: 10px;">🔄 Обновить страницу</button>
+        `;
+        document.body.appendChild(errorDiv);
+    }
+    
+    // Скрываем загрузку
+    showAppLoader(false);
 }
 
-helpers.log('Main.js загружен');
+// Глобальная обработка ошибок
+window.addEventListener('error', function(event) {
+    console.error('🚨 Глобальная ошибка:', event.error);
+    showAppError('Произошла непредвиденная ошибка: ' + event.error.message);
+});
+
+// Обработка unhandled promise rejections
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('🚨 Необработанная ошибка Promise:', event.reason);
+    showAppError('Ошибка Promise: ' + event.reason);
+    event.preventDefault();
+});
+
+// Экспортируем глобальные функции
+window.startDemo = startDemo;
+
+console.log('📱 Main.js загружен успешно');

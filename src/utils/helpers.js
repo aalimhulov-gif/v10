@@ -1,5 +1,61 @@
 // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 
+// Показ уведомлений
+function showToast(message, type = 'info', duration = 3000) {
+    // Создаем контейнер для уведомлений если его нет
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        `;
+        document.body.appendChild(container);
+    }
+
+    // Создаем уведомление
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.style.cssText = `
+        padding: 12px 20px;
+        border-radius: 6px;
+        color: white;
+        font-size: 14px;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        ${type === 'success' ? 'background: #27ae60;' : ''}
+        ${type === 'error' ? 'background: #e74c3c;' : ''}
+        ${type === 'warning' ? 'background: #f39c12;' : ''}
+        ${type === 'info' ? 'background: #3498db;' : ''}
+    `;
+    toast.textContent = message;
+
+    container.appendChild(toast);
+
+    // Анимация появления
+    setTimeout(() => {
+        toast.style.transform = 'translateX(0)';
+    }, 10);
+
+    // Удаление уведомления
+    setTimeout(() => {
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, duration);
+}
+
 // Генерация уникального ID
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -313,6 +369,7 @@ function log(message, data = null, level = 'info') {
 
 // Экспорт функций для глобального использования
 window.helpers = {
+    showToast,
     generateId,
     formatAmount,
     formatDate,
@@ -336,3 +393,6 @@ window.helpers = {
     handleError,
     log
 };
+
+// Делаем showToast глобально доступной
+window.showToast = showToast;
