@@ -342,6 +342,13 @@ async function handleCurrencyChange(newCurrency, oldCurrency) {
 
 // Экспорт всех функций
 window.currency = {
+    // Инициализация
+    init: async function() {
+        await currencyManager.init();
+        console.log('💱 Currency Manager инициализирован');
+        return true;
+    },
+    
     manager: currencyManager,
     convert: currencyManager.convert.bind(currencyManager),
     format: currencyManager.format.bind(currencyManager),

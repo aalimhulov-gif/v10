@@ -7,7 +7,7 @@ window.APP_NAME = 'Family Budget';
 // Загрузка и инициализация всех компонентов
 document.addEventListener('DOMContentLoaded', async function() {
     try {
-        helpers.log('🚀 Запуск Family Budget App v' + window.APP_VERSION);
+        console.log('🚀 Запуск Family Budget App v' + window.APP_VERSION);
         
         // Показываем индикатор загрузки
         showAppLoader(true);
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         showToast('Добро пожаловать в Family Budget!', 'success');
 
     } catch (error) {
-        helpers.log('❌ Ошибка запуска приложения', error, 'error');
+        console.error('❌ Ошибка запуска приложения', error);
         showAppError('Ошибка загрузки приложения. Попробуйте обновить страницу.');
     }
 });

@@ -407,7 +407,7 @@ class AuthManager {
                 user: this.currentUser,
                 expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 дней
             };
-            storageManager.save('userSession', sessionData);
+            storageManager.set('userSession', sessionData);
         }
     }
 

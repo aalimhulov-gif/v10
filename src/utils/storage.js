@@ -374,6 +374,13 @@ function migrateData(fromVersion, toVersion) {
 
 // Экспорт всех функций
 window.storageManager = {
+    // Инициализация
+    init: async function() {
+        storage.checkSupport();
+        console.log('💾 Storage Manager инициализирован');
+        return true;
+    },
+    
     // Основные методы
     set: storage.set.bind(storage),
     get: storage.get.bind(storage),
