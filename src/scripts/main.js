@@ -129,6 +129,9 @@ async function initializeSimpleUI() {
         // Применяем пользовательские настройки
         applyUserSettings();
         
+        // Загружаем данные из localStorage
+        loadFromLocalStorage();
+        
         // Показываем базовый интерфейс
         showBasicInterface();
         
@@ -162,27 +165,157 @@ function showBasicInterface() {
     const content = document.getElementById('content');
     if (content) {
         content.innerHTML = `
-            <div class="welcome-screen">
-                <h2>🎉 Добро пожаловать!</h2>
-                <p>Семейный бюджет для Артура и Валерии</p>
-                <div class="features">
-                    <div class="feature">
-                        <i class="fas fa-wallet"></i>
-                        <span>Управление бюджетом</span>
+            <!-- Заголовок с карточками пользователей -->
+            <header class="app-header">
+                <div class="header-content">
+                    <div class="user-cards">
+                        <div class="user-card" data-user="artur">
+                            <div class="user-info">
+                                <div class="user-avatar">👨</div>
+                                <div class="user-details">
+                                    <span class="user-name">Артур</span>
+                                    <span class="user-balance" data-balance="0">0.00 PLN</span>
+                                </div>
+                            </div>
+                            <div class="user-actions">
+                                <button class="btn btn-small btn-income" onclick="addOperation('artur', 'income')" title="Добавить доход">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="btn btn-small btn-expense" onclick="addOperation('artur', 'expense')" title="Добавить расход">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="user-card" data-user="valeria">
+                            <div class="user-info">
+                                <div class="user-avatar">👩</div>
+                                <div class="user-details">
+                                    <span class="user-name">Валерия</span>
+                                    <span class="user-balance" data-balance="0">0.00 PLN</span>
+                                </div>
+                            </div>
+                            <div class="user-actions">
+                                <button class="btn btn-small btn-income" onclick="addOperation('valeria', 'income')" title="Добавить доход">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="btn btn-small btn-expense" onclick="addOperation('valeria', 'expense')" title="Добавить расход">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="feature">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Аналитика расходов</span>
-                    </div>
-                    <div class="feature">
-                        <i class="fas fa-sync"></i>
-                        <span>Синхронизация данных</span>
+                    
+                    <div class="header-controls">
+                        <button id="theme-toggle" class="btn btn-icon" onclick="toggleTheme()" title="Переключить тему">
+                            <i class="fas fa-moon"></i>
+                        </button>
                     </div>
                 </div>
-                <button onclick="startDemo()" class="btn-primary">
-                    <i class="fas fa-play"></i> Начать работу
+            </header>
+
+            <!-- Навигация -->
+            <nav class="app-nav">
+                <button class="nav-item active" onclick="showPage('home')">
+                    <i class="fas fa-home"></i>
+                    <span>Главная</span>
                 </button>
-            </div>
+                <button class="nav-item" onclick="showPage('operations')">
+                    <i class="fas fa-list"></i>
+                    <span>Операции</span>
+                </button>
+                <button class="nav-item" onclick="showPage('categories')">
+                    <i class="fas fa-tags"></i>
+                    <span>Категории</span>
+                </button>
+                <button class="nav-item" onclick="showPage('limits')">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Лимиты</span>
+                </button>
+                <button class="nav-item" onclick="showPage('goals')">
+                    <i class="fas fa-bullseye"></i>
+                    <span>Цели</span>
+                </button>
+                <button class="nav-item" onclick="showPage('settings')">
+                    <i class="fas fa-cog"></i>
+                    <span>Настройки</span>
+                </button>
+            </nav>
+
+            <!-- Контент страниц -->
+            <main class="app-content">
+                <!-- Главная страница -->
+                <div id="page-home" class="page active">
+                    <div class="page-header">
+                        <h2>Обзор финансов</h2>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card income">
+                            <div class="stat-icon">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Доходы</h3>
+                                <p class="stat-amount" id="total-income">0.00 PLN</p>
+                            </div>
+                        </div>
+
+                        <div class="stat-card expense">
+                            <div class="stat-icon">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Расходы</h3>
+                                <p class="stat-amount" id="total-expense">0.00 PLN</p>
+                            </div>
+                        </div>
+
+                        <div class="stat-card balance">
+                            <div class="stat-icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Баланс</h3>
+                                <p class="stat-amount" id="total-balance">0.00 PLN</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recent-operations">
+                        <h3>Последние операции</h3>
+                        <div id="recent-operations-list">
+                            <p class="no-data">Операций пока нет. Добавьте первую операцию используя кнопки + и - в карточках пользователей.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Страницы операций, категорий и т.д. будут добавлены позже -->
+                <div id="page-operations" class="page" style="display: none;">
+                    <h2>Операции</h2>
+                    <p>Список всех операций будет здесь</p>
+                </div>
+                
+                <div id="page-categories" class="page" style="display: none;">
+                    <h2>Категории</h2>
+                    <p>Управление категориями</p>
+                </div>
+                
+                <div id="page-limits" class="page" style="display: none;">
+                    <h2>Лимиты</h2>
+                    <p>Управление лимитами расходов</p>
+                </div>
+                
+                <div id="page-goals" class="page" style="display: none;">
+                    <h2>Цели</h2>
+                    <p>Финансовые цели</p>
+                </div>
+                
+                <div id="page-settings" class="page" style="display: none;">
+                    <h2>Настройки</h2>
+                    <p>Настройки приложения</p>
+                </div>
+            </main>
         `;
     }
 }
@@ -266,7 +399,228 @@ window.addEventListener('unhandledrejection', function(event) {
     event.preventDefault();
 });
 
+// Система управления операциями и балансом
+let userBalances = { artur: 0, valeria: 0 };
+let operations = [];
+
+// Добавление операции
+function addOperation(user, type) {
+    const amount = prompt(`Введите сумму ${type === 'income' ? 'дохода' : 'расхода'} (PLN):`);
+    if (amount && !isNaN(amount) && parseFloat(amount) > 0) {
+        const value = parseFloat(amount);
+        const description = prompt('Описание операции (необязательно):') || `${type === 'income' ? 'Доход' : 'Расход'}`;
+        
+        const operation = {
+            id: Date.now(),
+            user,
+            type,
+            amount: value,
+            description,
+            date: new Date().toISOString(),
+            currency: 'PLN'
+        };
+        
+        operations.push(operation);
+        
+        // Обновляем баланс
+        if (type === 'income') {
+            userBalances[user] += value;
+        } else {
+            userBalances[user] -= value;
+        }
+        
+        updateUserCard(user);
+        updateStats();
+        updateRecentOperations();
+        
+        if (window.showToast) {
+            window.showToast(`${type === 'income' ? 'Доход' : 'Расход'} ${value} PLN добавлен для ${user === 'artur' ? 'Артура' : 'Валерии'}`, 'success');
+        }
+        
+        // Сохраняем в localStorage
+        saveToLocalStorage();
+        
+        console.log('Операция добавлена:', operation);
+    } else if (amount !== null) {
+        if (window.showToast) {
+            window.showToast('Введите корректную сумму', 'error');
+        }
+    }
+}
+
+// Обновление карточки пользователя
+function updateUserCard(user) {
+    const balanceElement = document.querySelector(`[data-user="${user}"] .user-balance`);
+    if (balanceElement) {
+        const balance = userBalances[user];
+        balanceElement.textContent = `${Math.abs(balance).toLocaleString('pl-PL', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })} PLN`;
+        
+        if (balance >= 0) {
+            balanceElement.style.color = '#4CAF50';
+        } else {
+            balanceElement.style.color = '#f44336';
+        }
+    }
+}
+
+// Обновление статистики
+function updateStats() {
+    const totalIncome = operations
+        .filter(op => op.type === 'income')
+        .reduce((sum, op) => sum + op.amount, 0);
+    
+    const totalExpense = operations
+        .filter(op => op.type === 'expense')
+        .reduce((sum, op) => sum + op.amount, 0);
+    
+    const totalBalance = totalIncome - totalExpense;
+    
+    const incomeElement = document.getElementById('total-income');
+    const expenseElement = document.getElementById('total-expense');
+    const balanceElement = document.getElementById('total-balance');
+    
+    if (incomeElement) {
+        incomeElement.textContent = `${totalIncome.toLocaleString('pl-PL', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })} PLN`;
+    }
+    
+    if (expenseElement) {
+        expenseElement.textContent = `${totalExpense.toLocaleString('pl-PL', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })} PLN`;
+    }
+    
+    if (balanceElement) {
+        balanceElement.textContent = `${Math.abs(totalBalance).toLocaleString('pl-PL', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })} PLN`;
+        
+        if (totalBalance >= 0) {
+            balanceElement.style.color = '#4CAF50';
+        } else {
+            balanceElement.style.color = '#f44336';
+        }
+    }
+}
+
+// Обновление списка последних операций
+function updateRecentOperations() {
+    const listElement = document.getElementById('recent-operations-list');
+    if (listElement) {
+        if (operations.length === 0) {
+            listElement.innerHTML = '<p class="no-data">Операций пока нет. Добавьте первую операцию используя кнопки + и - в карточках пользователей.</p>';
+        } else {
+            const recentOps = operations
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
+            
+            listElement.innerHTML = recentOps.map(op => `
+                <div class="operation-item ${op.type}">
+                    <div class="operation-icon">
+                        <i class="fas fa-${op.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i>
+                    </div>
+                    <div class="operation-details">
+                        <div class="operation-description">${op.description}</div>
+                        <div class="operation-meta">${op.user === 'artur' ? 'Артур' : 'Валерия'} • ${new Date(op.date).toLocaleDateString('ru-RU')}</div>
+                    </div>
+                    <div class="operation-amount ${op.type}">
+                        ${op.type === 'income' ? '+' : '-'}${op.amount.toLocaleString('pl-PL', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        })} PLN
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+}
+
+// Переключение страниц
+function showPage(pageId) {
+    // Скрываем все страницы
+    document.querySelectorAll('.page').forEach(page => {
+        page.style.display = 'none';
+    });
+    
+    // Убираем активный класс у всех навигационных элементов
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Показываем нужную страницу
+    const targetPage = document.getElementById(`page-${pageId}`);
+    if (targetPage) {
+        targetPage.style.display = 'block';
+    }
+    
+    // Добавляем активный класс нужному элементу навигации
+    const activeNavItem = document.querySelector(`[onclick="showPage('${pageId}')"]`);
+    if (activeNavItem) {
+        activeNavItem.classList.add('active');
+    }
+}
+
+// Переключение темы
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    
+    const themeIcon = document.querySelector('#theme-toggle i');
+    if (themeIcon) {
+        themeIcon.className = `fas fa-${newTheme === 'dark' ? 'sun' : 'moon'}`;
+    }
+    
+    // Сохраняем в localStorage
+    if (window.storageManager) {
+        const settings = window.storageManager.getUserSettings();
+        settings.theme = newTheme;
+        window.storageManager.saveUserSettings(settings);
+    }
+    
+    if (window.showToast) {
+        window.showToast(`Переключено на ${newTheme === 'dark' ? 'тёмную' : 'светлую'} тему`, 'info');
+    }
+}
+
+// Сохранение в localStorage
+function saveToLocalStorage() {
+    localStorage.setItem('familyBudget_operations', JSON.stringify(operations));
+    localStorage.setItem('familyBudget_balances', JSON.stringify(userBalances));
+}
+
+// Загрузка из localStorage
+function loadFromLocalStorage() {
+    const savedOperations = localStorage.getItem('familyBudget_operations');
+    const savedBalances = localStorage.getItem('familyBudget_balances');
+    
+    if (savedOperations) {
+        operations = JSON.parse(savedOperations);
+    }
+    
+    if (savedBalances) {
+        userBalances = JSON.parse(savedBalances);
+    }
+    
+    // Обновляем интерфейс
+    updateUserCard('artur');
+    updateUserCard('valeria');
+    updateStats();
+    updateRecentOperations();
+}
+
 // Экспортируем глобальные функции
 window.startDemo = startDemo;
+window.addOperation = addOperation;
+window.showPage = showPage;
+window.toggleTheme = toggleTheme;
 
 console.log('📱 Main.js загружен успешно');
