@@ -15,6 +15,18 @@ class CurrencyManager {
         this.updateInterval = 60 * 60 * 1000; // 1 час
     }
 
+    // Инициализация менеджера валют
+    async init() {
+        try {
+            await this.updateRates();
+            console.log('💱 CurrencyManager инициализирован');
+            return true;
+        } catch (error) {
+            console.error('Ошибка инициализации CurrencyManager:', error);
+            return false;
+        }
+    }
+
     // Получение символа валюты
     getCurrencySymbol(currency) {
         const symbols = {
