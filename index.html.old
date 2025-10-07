@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Семейный бюджет</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./src/styles/main.css" />
+    <link rel="stylesheet" href="./src/styles/themes.css" />
+    <link rel="stylesheet" href="./src/styles/components.css" />
+    <link rel="stylesheet" href="./src/styles/modal.css" />
+  </head>
+  <body>
+    <!-- Лоадер -->
+    <div id="loader" class="loader">
+      <div class="spinner"></div>
+      <p>Загрузка...</p>
+    </div>
+
+    <div id="app">
+      <h1>💰 Семейный бюджет - Артур и Валерия</h1>
+      <div id="content">
+        <div
+          id="error-message"
+          style="
+            display: none;
+            color: red;
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid red;
+            border-radius: 5px;
+          "
+        >
+          <h3>Ошибка загрузки приложения</h3>
+          <p>Проверьте консоль браузера для деталей.</p>
+          <button onclick="location.reload()">Обновить страницу</button>
+        </div>
+        <div id="loading-status">
+          <p>Приложение загружается...</p>
+          <div id="module-status"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./src/firebase/config.js"></script>
+    <script src="./src/firebase/db.js"></script>
+    <script src="./src/utils/helpers.js"></script>
+    <script src="./src/utils/storage.js"></script>
+    <script src="./src/utils/currency.js"></script>
+    <script src="./src/components/modals.js"></script>
+    <script src="./src/components/cards.js"></script>
+    <script src="./src/components/navigation.js"></script>
+    <script src="./src/pages/home.js"></script>
+    <script src="./src/pages/operations.js"></script>
+    <script src="./src/pages/categories.js"></script>
+    <script src="./src/pages/limits.js"></script>
+    <script src="./src/pages/goals.js"></script>
+    <script src="./src/pages/settings.js"></script>
+    <script src="./src/scripts/auth.js"></script>
+    <script src="./src/scripts/operations.js"></script>
+    <script src="./src/scripts/app.js"></script>
+    <script src="./src/scripts/main.js"></script>
+  </body>
+</html>
